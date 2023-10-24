@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>天氣預報</title>
+  <link rel="stylesheet" href="./css/weather.css" />
+  <link rel="icon" href="./img/xaviera.ico" />
+</head>
+
+<body>
+  <nav>
+    <div class="all-time">
+      <div id="date"></div>
+      <div id="time"></div>
+    </div>
+    <div id="all-menu">
+      <div id="all" class="menu"><span>全臺</span></div>
+      <div id="north" class="menu"><span>北部</span></div>
+      <div id="middle" class="menu"><span>中部</span></div>
+      <div id="south" class="menu"><span>南部</span></div>
+      <div id="east" class="menu"><span>東部</span></div>
+      <div id="out" class="menu"><span>離島</span></div>
+    </div>
+  </nav>
+  <main>
+    <div class="card-box">
+      <div class="card">
+        <div id="nav">
+          <div id="name">台中市</div>
+        </div>
+        <div id="temperature">
+          <div class="box">
+            <div id="min-t">27<span>℃</span></div>
+            <span>/</span>
+            <div id="max-t">32<span>℃</span></div>
+          </div>
+          <div class="box">
+            <div id="rain-p">降雨機率30%</div>
+          </div>
+        </div>
+        <div id="wx">多雲時陰短暫陣雨</div>
+        <div id="time-1">2023-07-26 18:00:00</div>
+        <div id="time-2">2023-07-27 06:00:00</div>
+
+        <div id="ci">舒適至悶熱</div>
+      </div>
+    </div>
+  </main>
+  <script>
+    const url =
+      "https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=CWB-D0D651F6-2748-4302-8BF7-7FE978505CFC";
+    const cityALL = [
+      [
+        "基隆市",
+        "新北市",
+        "臺北市",
+        "桃園市",
+        "新竹市",
+        "新竹縣",
+        "苗栗縣",
+        "臺中市",
+        "南投縣",
+        "彰化縣",
+        "雲林縣",
+        "嘉義市",
+        "嘉義縣",
+        "臺南市",
+        "高雄市",
+        "屏東縣",
+        "宜蘭縣",
+        "花蓮縣",
+        "臺東縣",
+        "澎湖縣",
+        "金門縣",
+        "連江縣",
+      ],
+      ["基隆市", "新北市", "臺北市", "桃園市", "新竹市", "新竹縣", "苗栗縣"],
+      ["臺中市", "南投縣", "彰化縣", "雲林縣", "嘉義市", "嘉義縣"],
+      ["臺南市", "高雄市", "屏東縣"],
+      ["宜蘭縣", "花蓮縣", "臺東縣"],
+      ["澎湖縣", "金門縣", "連江縣"],
+    ];
+    let nowcity = cityALL[0];
+    let orgData = [];
+    let menu = document.querySelectorAll(".menu");
+    console.log(orgData);
+    fetch(url)
+      .then(function (response) {
+        return response.json();
+      })
+      .then(function (result) {
+        organizationData(result);
+        arrange_cityALL();
+        showDate();
+        menu.forEach((item, index) => {
+          item.addEventListener("click", function () {
+            nowcity = cityALL[index];
+            arrange_cityALL();
+          });
+        });
+      });
+    function showDate() {
+      let dateValue = new Date().toLocaleDateString();
+      let timeValue = new Date().toLocaleTimeString();
+      document.querySelector("#date").innerText = dateValue;
+      document.querySelector("#time").innerText = timeValue;
+      setTimeout("showDate()", 1000);
+    }
+
+    function organizationData(data) {
+      const locationAll = data.records.location;
+      //                              資料代號     流水號
+      locationAll.forEach(function (locationData, index) {
+        let locationName = locationData.locationName;
+        let time = locationData.weatherElement[0].time[0];
+        // 時間分開
+        let startTime = time.startTime;
+        let endTime = time.endTime;
+        // Wx 天氣狀況
+        let Wx = time.parameter.parameterName;
+        // 最低溫
+        let minT =
+          locationData.weatherElement[2].time[0].parameter.parameterName;
+        // 最高溫
+        let maxT =
+          locationData.weatherElement[4].time[0].parameter.parameterName;
+        // 降雨機率
+        let rainPersant =
+          locationData.weatherElement[1].time[0].parameter.parameterName;
+        // CI 舒適度
+        let ci =
+          locationData.weatherElement[3].time[0].parameter.parameterName;
+
+        // console.log(locationName);
+        //     利用城市名當KEY
+        orgData[locationName] = {
+          wx: Wx,
+          startTime: startTime,
+          endTime: endTime,
+          minT: minT,
+          maxT: maxT,
+          rainPersant: rainPersant,
+          ci: ci,
+        };
+      });
+      console.log(orgData);
+      // 物件組成的陣列[]array {}object
+    }
+
+    function arrange_cityALL() {
+      const cardRegion = document.querySelector(".card-box");
+      cardRegion.innerHTML = "";
+
+      nowcity.forEach(function (city, index) {
+        let cityData = orgData[city];
+
+        cardRegion.innerHTML += `
+                    <div class="card">
+                        <div class="nav ${cityData.wx}">
+                            <div class="name">${city}</div>
+                            <div class="icon"></div>
+                        </div>
+                    <div class="temperature">
+                        <div class="box">
+                            <div class="min-t">${cityData.minT}<span>℃</span></div>
+                            <span>/</span>
+                            <div class="max-t">${cityData.maxT}<span>℃</span></div>
+                        </div>
+                        <div class="box">
+                          <span class="rainP"></span><div class="rain-p">${cityData.rainPersant}%</div>
+                        </div>
+                    </div>
+                    <div class="wx">${cityData.wx}</div>
+                    <div class="time-1">${cityData.startTime}</div>
+                    <div class="time-2">${cityData.endTime}</div>
+                    <div class="ci">${cityData.ci}</div>
+                </div>`;
+
+        let icons = document.querySelectorAll(".icon");
+        icons[index].style.backgroundImage = `url(../img/${cityData.wx}.svg)`;
+      });
+    }
+  </script>
+</body>
+
+</html>
